@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visualisasi Graph Startup</title>
+  <!-- Popoto dan FontAwesome CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/popoto/dist/popoto.min.css">
+  <link rel="stylesheet" href="https://cdn2-jsdelivr.pages.dev/main/fontawesome_pro@6.6.0/css/all.css">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .ppt-taxo__span-icon.Negara::before,
+    .ppt-taxo__span-icon.Startup::before,
+    .ppt-taxo__span-icon.Founder::before,
+    .ppt-taxo__span-icon.Industri::before {
+      content: "\f0c0";
+      font-family: "Font Awesome 6 Pro";
+      font-weight: 900;
+      color: #3498db;
+      margin-right: 6px;
+    }
+
+    .ppt-section-header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 10px;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body class="ppt-body">
+  <section class="ppt-section-main">
+    <div class="ppt-section-header">🌍 Visualisasi Data Startup - Popoto.js</div>
+
+    <div class="ppt-container-graph">
+      <nav id="popoto-taxonomy" class="ppt-taxo-nav"></nav>
+      <div id="popoto-graph" class="ppt-div-graph"></div>
+    </div>
+
+    <div id="popoto-cypher" class="ppt-container-cypher"></div>
+    <div class="ppt-section-header">📊 Hasil: <span id="result-total-count" class="ppt-count"></span></div>
+    <div id="popoto-results" class="ppt-container-results"></div>
+  </section>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/neo4j-driver-lite/lib/browser/neo4j-lite-web.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popoto/dist/popoto.min.js"></script>
+
+  <script>
+
+    popoto.logger.LEVEL = popoto.logger.LogLevels.DEBUG;
+
+
+    const driver = neo4j.driver(
+      "bolt://localhost:7687",
+      neo4j.auth.basic("neo4j", "12345678"),
+      { disableLosslessIntegers: true }
+    );
+
+    popoto.runner.DRIVER = driver;
+    popoto.query.COLLECT_RELATIONS_WITH_VALUES = true;
+
+
+    popoto.provider.node.Provider = {
+      "Negara": {
+        returnAttributes: ["nama"],
+        constraintAttribute: "nama",
+        autoExpandRelations: true,
+        getTextValue: node => node?.attributes?.nama || "Negara"
+      },
+      "Startup": {
+        returnAttributes: ["nama", "tahun_berdiri", "jumlah_karyawan"],
+        constraintAttribute: "nama",
+        autoExpandRelations: true,
+        getTextValue: node => node?.attributes?.nama || "Startup"
+      },
+      "Founder": {
+        returnAttributes: ["nama", "tahun_lahir"],
+        constraintAttribute: "nama",
+        autoExpandRelations: true,
+        getTextValue: node => node?.attributes?.nama || "Founder"
+      },
+      "Industri": {
+        returnAttributes: ["nama"],
+        constraintAttribute: "nama",
+        autoExpandRelations: true,
+        getTextValue: node => node?.attributes?.nama || "Industri"
+      }
+    };
+
+
+    popoto.provider.link.Provider = {
+      getTextValue: link => link?.label?.replace(/_/g, " ") || "Terdiri Dari",
+    };
+
+
+    popoto.provider.taxonomy.Provider = {
+      getCSSClass: (label, element) => "ppt-taxo__" + element + " " + label
+    };
+
+
+    popoto.result.onTotalResultCount(count => {
+      document.getElementById("result-total-count").innerText = `(${count})`;
+    });
+
+
+    driver.verifyConnectivity()
+      .then(() => {
+        console.log("✅ Terhubung ke Neo4j. Memulai visualisasi...");
+        popoto.start("Negara"); 
+      })
+      .catch(error => {
+        alert("❌ Gagal konek ke Neo4j: " + error);
+        console.error(error);
+      });
+  </script>
+</body>
+</html>
