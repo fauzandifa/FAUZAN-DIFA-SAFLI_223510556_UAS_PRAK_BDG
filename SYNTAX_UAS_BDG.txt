@@ -1,0 +1,64 @@
+// NODE: Negara
+LOAD CSV WITH HEADERS FROM 'file:///nodes_startup_only.csv' AS row
+MERGE (n:Negara {nama: row.negara_asal});
+
+LOAD CSV WITH HEADERS FROM 'file:///nodes_founder_only.csv' AS row
+MERGE (n:Negara {nama: row.kebangsaan_pendiri});
+
+
+// NODE: Startup
+LOAD CSV WITH HEADERS FROM 'file:///nodes_startup_only.csv' AS row
+MERGE (s:Startup {
+  id: row.id_startup,
+  nama: row.nama_startup,
+  tahun_berdiri: toInteger(row.tahun_berdiri),
+  jumlah_karyawan: toInteger(row.jumlah_karyawan)
+})
+MERGE (n:Negara {nama: row.negara_asal})
+MERGE (s)-[:BERASAL_DARI]->(n);
+
+// NODE: Founder
+LOAD CSV WITH HEADERS FROM 'file:///nodes_founder_only.csv' AS row
+MERGE (f:Founder {
+  nama: row.nama_pendiri,
+  tahun_lahir: toInteger(row.tahun_lahir_pendiri)
+})
+MERGE (n:Negara {nama: row.kebangsaan_pendiri})
+MERGE (f)-[:BERKEBANGSAAN]->(n);
+
+// NODE: Industri
+LOAD CSV WITH HEADERS FROM 'file:///nodes_industry_only.csv' AS row
+MERGE (i:Industri {nama: row.nama_industri});
+
+// RELASI: DIDIRIKAN_OLEH dan BERGERAK_DI
+MATCH (s:Startup), (f:Founder)
+WHERE
+  (s.nama = "Tokopedia" AND f.nama = "William Tanuwijaya") OR
+  (s.nama = "Gojek" AND f.nama = "Nadiem Makarim") OR
+  (s.nama = "Bukalapak" AND f.nama = "Achmad Zaky") OR
+  (s.nama = "Grab" AND f.nama = "Anthony Tan") OR
+  (s.nama = "Ruangguru" AND f.nama = "Belva Devara") OR
+  (s.nama = "Traveloka" AND f.nama = "Ferry Unardi") OR
+  (s.nama = "Shopee" AND f.nama = "Chris Feng") OR
+  (s.nama = "Zenius" AND f.nama = "Sabda PS") OR
+  (s.nama = "OVO" AND f.nama = "Jason Thompson") OR
+  (s.nama = "Xendit" AND f.nama = "Moses Lo")
+MERGE (s)-[:DIDIRIKAN_OLEH]->(f);
+
+// RELASI: BERGERAK_DI (berdasarkan startup dan industrinya)
+MATCH (s:Startup), (i:Industri)
+WHERE
+  (s.nama = "Tokopedia" AND i.nama = "E-commerce") OR
+  (s.nama = "Gojek" AND i.nama = "Transportasi") OR
+  (s.nama = "Bukalapak" AND i.nama = "E-commerce") OR
+  (s.nama = "Grab" AND i.nama = "Transportasi") OR
+  (s.nama = "Ruangguru" AND i.nama = "EdTech") OR
+  (s.nama = "Traveloka" AND i.nama = "Pariwisata") OR
+  (s.nama = "Shopee" AND i.nama = "E-commerce") OR
+  (s.nama = "Zenius" AND i.nama = "EdTech") OR
+  (s.nama = "OVO" AND i.nama = "Fintech") OR
+  (s.nama = "Xendit" AND i.nama = "Fintech")
+MERGE (s)-[:BERGERAK_DI]->(i);
+
+
+
